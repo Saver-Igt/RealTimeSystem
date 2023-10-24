@@ -1,36 +1,33 @@
 package org.example.GUI;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
-public class MyImage {
-    private JLabel label;
+public class MyImage extends JLabel{
     private ImageIcon icon;
-    public MyImage(int x, int y, int width, int height, String filePath){
-        try {
-            BufferedImage img = ImageIO.read(new File(filePath));
-            icon = new ImageIcon(img);
-            label = new JLabel(resize(width, height));
-            label.setLocation(x,y);
-            label.setSize(width, height);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private int width;
+    private int height;
+    public MyImage(int iconWidth, int iconHeight,String filePath){
+        icon = new ImageIcon(filePath);
+        this.height = iconHeight;
+        this.width = iconWidth;
+        setIcon(resizeIcon(iconWidth, iconHeight,icon));
     }
-    public ImageIcon resize(int w, int h){
-        BufferedImage bi = new BufferedImage(w,h,BufferedImage.TRANSLUCENT);
+    public ImageIcon resizeIcon(int width, int height, ImageIcon icon){
+        BufferedImage bi = new BufferedImage(width,height,BufferedImage.TRANSLUCENT);
         Graphics2D gd = bi.createGraphics();
         gd.addRenderingHints(new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY));
-        gd.drawImage(icon.getImage(), 0,0,w,h,null);
+        gd.drawImage(icon.getImage(), 0,0,width,height,null);
         gd.dispose();
         return new ImageIcon(bi);
     }
-
-    public JLabel getLabel() {
-        return label;
+    @Override
+    public void repaint(long tm, int x, int y, int width, int height) {
+        super.repaint(tm, x, y, width, height);
+    }
+    public void setNewIcon(String filePath){
+        icon = new ImageIcon(filePath);
+        setIcon(resizeIcon(width, height,icon));
     }
 }
