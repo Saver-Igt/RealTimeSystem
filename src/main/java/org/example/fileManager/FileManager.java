@@ -1,19 +1,82 @@
 package org.example.fileManager;
 
+import org.example.model.*;
 import org.example.model.Error;
-import org.example.model.ErrorType;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 public class FileManager {
     //private final String PATH = Main.class.getClassLoader().getResource("Errors.txt").getPath();;
     private final String file = "src\\main\\resources\\Errors.txt";
+    private final String cashBoxesPath = "src\\main\\resources\\cashboxes.txt";
+    private final String dataPath = "src\\main\\resources\\data\\";
+    public List<DataSet> getData(int id) {
+        List<DataSet> dataSet = new ArrayList<>();
+        File dataDir = new File(dataPath + "c" + id + ".txt");
+        if(dataDir.isFile()){
+            try {
+                StringBuilder stringBuilder = new StringBuilder();
+                FileInputStream fis = new FileInputStream(dataDir);
+                int i = -1;
+                while(( i = fis.read()) != -1){
+                    char c = (char) i;
+                    stringBuilder.append(c);
+                }
+                String[] array = stringBuilder.toString().split("\r\n");
+                for (String str: array) {
+                    if(str.equals("")){
+                        return null;
+                    }
+                    String[] strings = str.split(";");
+                    final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+                    Date date = dateFormat.parse(strings[0]);
+                    int res = Integer.parseInt(strings[1]);
+                    dataSet.add(new DataSet(date, res));
+                }
+                fis.close();
+            } catch(IOException e){
+                e.printStackTrace();
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return dataSet;
+    }
+    public void putData(int id, int value){
+        File dataDir = new File(dataPath + "c" + id + ".txt");
+        if (dataDir.isFile()) {
+            try {
+                FileWriter writer = new FileWriter(dataDir, true);
+                final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+                Calendar now = Calendar.getInstance();
+                String date = dateFormat.format(now.getTime());
+                writer.write(date + ";" + value + "\r\n");
+                writer.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+    public void createDataForAllCashBoxes() {
+        List<Cashbox> cashboxes = getCashBoxes();
+        for (Cashbox c:cashboxes) {
+            PrintWriter writer = null;
+            try {
+                writer = new PrintWriter(dataPath + "c" + c.getId() + ".txt", StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }finally {
+                writer.close();
+            }
+        }
+    }
     public List<Error> getErrors(){
         List<Error> errors = new ArrayList<>();
         try {
@@ -28,7 +91,7 @@ public class FileManager {
             for (String str: array) {
                 Error error = getError(str);
                 if(error != null){
-                    errors.add(getError(str));
+                    errors.add(error);
                 }
             }
             fis.close();
@@ -36,6 +99,39 @@ public class FileManager {
             e.printStackTrace();
         }
         return errors;
+    }
+    public List<Cashbox> getCashBoxes(){
+        List<Cashbox> cashboxes = new ArrayList<>();
+        try {
+            StringBuilder stringBuilder = new StringBuilder();
+            FileInputStream fis = new FileInputStream(cashBoxesPath);
+            int i = -1;
+            while(( i = fis.read()) != -1){
+                char c = (char) i;
+                stringBuilder.append(c);
+            }
+            String[] array = stringBuilder.toString().split("\r\n");
+            for (String str: array) {
+                Cashbox cashbox = getCashbox(str);
+                if(cashbox != null){
+                    cashboxes.add(cashbox);
+                }
+            }
+            fis.close();
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        return cashboxes;
+    }
+    public Cashbox getCashbox(String string){
+        if(string.equals("")){
+            return null;
+        }
+        String[] strings = string.split(";");
+        int id = Integer.parseInt(strings[0]);
+        STATUS status = STATUS.valueOf(strings[1]);
+        int summ = Integer.parseInt(strings[2]);
+        return new Cashbox(id, status,summ);
     }
     private Error getError(String string){
         if(string.equals("")){
@@ -67,14 +163,20 @@ public class FileManager {
         }
         return findError;
     }
-    public Error deleteError(Error error) throws IOException {
-        List<Error> errors = getErrors();
-        Error findError = errors.stream().filter(e -> e.getId() == error.getId())
+    public Cashbox updateCashbox(Cashbox cashbox){
+        List<Cashbox> cashboxes = getCashBoxes();
+        Cashbox findCashbox = cashboxes.stream().filter(e -> e.getId() == cashbox.getId())
                 .findFirst().orElse(null);
-        if(findError == null) return null;
-        errors.remove(findError);
-        save(errors);
-        return findError;
+        if(findCashbox == null) return null;
+
+        findCashbox.setSumm(cashbox.getSumm());
+
+        try {
+            saveCashBox(cashboxes);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return findCashbox;
     }
     public void addError(Error error){
         try(FileWriter fw = new FileWriter(file, true))
@@ -91,5 +193,11 @@ public class FileManager {
         }
         writer.close();
     }
-
+    private void saveCashBox(List<Cashbox> cashboxes) throws IOException{
+        PrintWriter writer = new PrintWriter(cashBoxesPath, "UTF-8");
+        for (Cashbox c:cashboxes) {
+            writer.println(c.getId() + ";" + c.getStatus() + ";" + c.getSumm());
+        }
+        writer.close();
+    }
 }

@@ -1,23 +1,24 @@
 package org.example.model;
 
+import org.example.fileManager.FileManager;
+
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Cashbox {
     private int id;
     private STATUS status = STATUS.DISABLED;
     private Error error = null;
-    private final int chance = 50;
+    private long summ;
+    private int income = 0;
+    private int cost = 0;
+    private final int chance = 98;
     private HashMap<STATUS, String> icons = new HashMap<>();
-
-    public Cashbox(int id, STATUS status) {
+    public Cashbox(int id, STATUS status, int summ) {
         this.id = id;
-
         this.status = status;
-        createMapIcons();
-    }
-    public Cashbox(int id, String name) {
-        this.id = id;
+        this.summ = summ;
         createMapIcons();
     }
     public int getId() {
@@ -40,22 +41,50 @@ public class Cashbox {
         } else if (status == STATUS.PAYMENT) {
             int a = new Random().nextInt(100);
             if(a > chance){
-                status = STATUS.ERROR;
-                error = new Error(this, ErrorType.PAYMENT);
+                callPaymentError();
             }else {
                 status = STATUS.PRINTING;
             }
         }else if(status == STATUS.PRINTING){
             int a = new Random().nextInt(100);
             if(a > chance - 1){
-                status = STATUS.ERROR;
-                error = new Error(this, ErrorType.CHECK);
+                callCheckError();
             }else {
                 status = STATUS.SUCCESS;
+                addMoney();
             }
         } else if (status == STATUS.SUCCESS) {
             status = STATUS.WORKING;
         }
+    }
+    public void addMoney(){
+        income = ThreadLocalRandom.current().nextInt(10, 1000 + 1);
+        summ += income;
+        cost = ThreadLocalRandom.current().nextInt(100, 200 + 1);
+        summ -= cost;
+        FileManager fileManager = new FileManager();
+        fileManager.updateCashbox(this);
+        fileManager.putData(this.id, income);
+        fileManager.putData(this.id, -1 * cost);
+        // System.out.println("Money: " + mon);
+        // System.out.println("SUmm: " + summ);
+    }
+    public void idleTimePay(){
+        income = 0;
+        cost = ThreadLocalRandom.current().nextInt(2000, 4000 + 1);
+        summ -= cost;
+        FileManager fileManager = new FileManager();
+        fileManager.updateCashbox(this);
+        fileManager.putData(this.id, income);
+        fileManager.putData(this.id, -1 * cost);
+    }
+    public void callCheckError(){
+        status = STATUS.ERROR;
+        error = new Error(this, ErrorType.CHECK);
+    }
+    public void callPaymentError(){
+        status = STATUS.ERROR;
+        error = new Error(this, ErrorType.PAYMENT);
     }
     public boolean canWork(){
         return status != STATUS.DISABLED && status != STATUS.ERROR;
@@ -102,5 +131,21 @@ public class Cashbox {
     }
     public Error getError(){
         return error;
+    }
+    public long getSumm() {
+        return summ;
+    }
+    public void setSumm(long summ) {
+        this.summ = summ;
+    }
+    public int getIncome() {
+        return income;
+    }
+    public int getCost() {
+        return cost;
+    }
+    @Override
+    public String toString() {
+        return "Касса №" + this.id;
     }
 }

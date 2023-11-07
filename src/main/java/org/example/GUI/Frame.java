@@ -1,12 +1,14 @@
 package org.example.GUI;
 
+import org.example.GUI.charts.BarChart;
+import org.example.GUI.charts.LineChart;
 import org.example.GUI.menu.MyMenu;
 import org.example.fileManager.FileManager;
 import org.example.model.Cashbox;
 import org.example.model.Error;
 import org.example.model.ErrorType;
-import org.example.model.STATUS;
 
+import javax.sound.sampled.Line;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -15,7 +17,8 @@ import java.util.List;
 
 public class Frame extends JFrame{
     private JPanel panel;
-    //test
+    private BarChart chart;
+    private List<LineChart> lineCharts;
     private List<Cashbox> cashboxes;
     public Frame(String title){
         super(title);
@@ -24,15 +27,18 @@ public class Frame extends JFrame{
         setIconImage(icon.getImage());
         setLayout(null);
         //default
-        //test
-        cashboxes = new ArrayList<>();
-        // Generation
-        cashboxes.add(new Cashbox(1, STATUS.DISABLED));
-        cashboxes.add(new Cashbox(2, STATUS.ENABLED));
-        cashboxes.add(new Cashbox(3, STATUS.DISABLED));
-        cashboxes.add(new Cashbox(4, STATUS.DISABLED));
-        cashboxes.add(new Cashbox(5, STATUS.DISABLED));
-        cashboxes.add(new Cashbox(6, STATUS.DISABLED));
+        FileManager fileManager = new FileManager();
+        cashboxes = fileManager.getCashBoxes();
+        for (Cashbox c: cashboxes) {
+            c.setSumm(1000);
+            fileManager.updateCashbox(c);
+        }
+        //Гистограмма
+        chart = new BarChart();
+        //График
+        fileManager.createDataForAllCashBoxes();
+        lineCharts = new ArrayList<>();
+        //Основная схема
         createScheme();
         // Menu
         MyMenu menu = new MyMenu(this);
@@ -40,21 +46,17 @@ public class Frame extends JFrame{
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setVisible(true);
 
-        //Localisatioon to Rus
+        //Localisation to Rus
         UIManager.put("OptionPane.yesButtonText"   , "Да"    );
         UIManager.put("OptionPane.noButtonText"    , "Нет"   );
         UIManager.put("OptionPane.cancelButtonText", "Отмена");
     }
+    public void createPanelForG1(Cashbox cashbox){
+        //TO DO
+        LineChart newLineChart = new LineChart(cashbox);
+        lineCharts.add(newLineChart);
 
-    public void createPanelForG1(){
-        if(panel != null){
-            remove(panel);
-        }
-        panel = new JPanel();
-        panel.setBounds(0,0,getWidth(),getHeight());
-        add(panel);
-
-        refreshFrame();
+        newLineChart.setVisible(true);
     }
     public void createErrorHistory(){
         if(panel != null){
@@ -94,35 +96,8 @@ public class Frame extends JFrame{
         add(panel);
         refreshFrame();
     }
-    public void createPanelForG2(){
-        if(panel != null){
-            remove(panel);
-        }
-        panel = new JPanel();
-        panel.setBounds(0,0,getWidth(),getHeight());
-        add(panel);
-        JLabel text = new JLabel("Это тоже график");
-        text.setBounds(0,0,200,100);
-        panel.add(text);
-        refreshFrame();
-    }
     public void createPanelForG3(){
-        if(panel != null){
-            remove(panel);
-        }
-        panel = new JPanel();
-        panel.setBorder(new EmptyBorder(10,10,10,10));
-        panel.setLayout(new GridLayout(0,3,20,20));
-        panel.setBounds(0,0,getWidth(),getHeight());
-        add(panel);
-        JLabel text = new JLabel("А это диаграмма");
-
-        MyImage label = new MyImage(150,50,"src/main/resources/images/cas/casDef.png");
-
-        text.setBounds(0,0,200,100);
-        panel.add(label);
-        panel.add(text);
-        refreshFrame();
+        chart.setVisible();
     }
     public void createScheme(){
         if(panel != null){
@@ -135,8 +110,8 @@ public class Frame extends JFrame{
         add(panel);
 
         List<GCashBox> jLabelList = new ArrayList<>();
-        for (int i=0; i < cashboxes.size(); i++) {
-            jLabelList.add(new GCashBox(cashboxes.get(i)));
+        for (Cashbox cashbox : cashboxes) {
+            jLabelList.add(new GCashBox(cashbox, this));
         }
         for (GCashBox el: jLabelList) {
             panel.add(el);
@@ -146,5 +121,17 @@ public class Frame extends JFrame{
     public void refreshFrame(){
         getContentPane().validate();
         getContentPane().repaint();
+    }
+    public List<Cashbox> getCashboxes() {
+        return cashboxes;
+    }
+    public void refreshDataSetForLineChart(Cashbox cashbox){
+        LineChart ls = lineCharts.stream().filter(lineChart -> lineChart.getCashbox() == cashbox).findFirst().orElse(null);
+        if(ls != null){
+            ls.refreshDataSet();
+        }
+    }
+    public void refreshBarCharDataSet(){
+        chart.refreshDataSet(cashboxes);
     }
 }

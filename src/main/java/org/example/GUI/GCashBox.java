@@ -18,8 +18,10 @@ public class GCashBox extends JPanel {
     private MyImage image;
     private JLabel field1;
     private JLabel field2;
-    public GCashBox(Cashbox cashbox){
+    private Frame parent;
+    public GCashBox(Cashbox cashbox, Frame parent){
         this.cashbox = cashbox;
+        this.parent = parent;
         setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 
         image = new MyImage(64,64,cashbox.getIcon());
@@ -51,7 +53,7 @@ public class GCashBox extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 if(cashbox.getStatus() == STATUS.DISABLED){
                     int result = JOptionPane.showConfirmDialog(
-                            getParent(),
+                            parent,
                             "Касса№"+cashbox.getId() +
                                     "\nСтатус: " + cashbox.getRusStatus() +"."+
                                     "\nВключить?",
@@ -63,9 +65,9 @@ public class GCashBox extends JPanel {
                         startfWork();
                     }
                 }else if(cashbox.getStatus() == STATUS.ERROR){
-                    PopUpFrame errorPopUp = new PopUpFrame(getParent(), cashbox.getError(), ref);
+                    PopUpFrame errorPopUp = new PopUpFrame(parent, cashbox.getError(), ref);
                 }else{
-                    PopUpFrame popUpFrame = new PopUpFrame(getParent(),cashbox);
+                    PopUpFrame popUpFrame = new PopUpFrame(parent,cashbox);
                 }
             }
         });
@@ -84,15 +86,40 @@ public class GCashBox extends JPanel {
                     if(!cashbox.canWork()){
                         timer.cancel();
                         timer.purge();
+                        if(cashbox.getStatus() == STATUS.ERROR){
+                            idleCashbox();
+                        }
                     }
                 }
             };
             timer.schedule(task1, randomNum,randomNum);
         }
     }
+    public void idleCashbox(){
+        Timer timer = new Timer();
+        TimerTask task1 = new TimerTask() {
+            public void run() {
+                cashbox.idleTimePay();
+                if(cashbox.canWork()){
+                    timer.cancel();
+                    timer.purge();
+
+                }
+                parent.refreshDataSetForLineChart(cashbox);
+            }
+        };
+        timer.schedule(task1, 1000,1000);
+    }
     public void refresh(){
         image.setNewIcon(cashbox.getIcon());
         image.repaint();
+        if(cashbox.getStatus() == STATUS.SUCCESS){
+            triggerDataRefresh();
+            parent.refreshDataSetForLineChart(cashbox);
+        }
         field2.setText("Статус: " + cashbox.getRusStatus());
+    }
+    public void triggerDataRefresh(){
+        parent.refreshBarCharDataSet();
     }
 }

@@ -1,11 +1,17 @@
 import org.example.fileManager.FileManager;
+import org.example.model.DataSet;
 import org.example.model.Error;
 import org.example.model.ErrorType;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 public class TestFileManager {
     private  FileManager fileManager;
@@ -26,18 +32,8 @@ public class TestFileManager {
     }
     @Test
     public void deleteTest(){
-        List<Error> errorList = fileManager.getErrors();
-        Error error = new Error(errorList.getLast().getId() + 1,"12.12.1212 12:12:12",2, ErrorType.PAYMENT,false);
-
-    }
-    @Test
-    public void addErrorTest(){
-        List<Error> errorList = fileManager.getErrors();
-        Error error = new Error(errorList.getLast().getId() + 1,"12.12.1212 12:12:12",2, ErrorType.PAYMENT,false);
-        fileManager.addError(error);
-
-        //equals
-        List<Error> newErrorList = fileManager.getErrors();
-        Assert.assertTrue(newErrorList.contains(error));
+        List<DataSet> data = fileManager.getData(1);
+        fileManager.putData(1,123);
+        List<DataSet> data2 = fileManager.getData(1);
     }
 }

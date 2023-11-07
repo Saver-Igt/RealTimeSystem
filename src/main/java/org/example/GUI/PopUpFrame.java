@@ -6,18 +6,20 @@ import org.example.model.Error;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ThreadLocalRandom;
 public class PopUpFrame extends JFrame {
     private GCashBox parent;
-    public PopUpFrame(Container panel, Cashbox cashBox){
+    public PopUpFrame(Frame frame, Cashbox cashBox){
         super("Описание");
-        JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(panel);
-        int width = parentFrame.getWidth()/2;
-        int height = parentFrame.getHeight()/2;
-        int x = parentFrame.getX() + parentFrame.getWidth()/4;
-        int y = parentFrame.getY() + parentFrame.getHeight()/4;
+
+        int width = frame.getWidth()/2;
+        int height = frame.getHeight()/2;
+        int x = frame.getX() + frame.getWidth()/4;
+        int y = frame.getY() + frame.getHeight()/4;
 
         setBounds(x,y, width, height);
         ImageIcon icon = new ImageIcon("src/main/resources/images/icon.png");
@@ -28,8 +30,13 @@ public class PopUpFrame extends JFrame {
 
         MyImage image = new MyImage(100,100, "src/main/resources/images/cas/casEn.png");
         infoPanel.add(image);
-        JLabel label = new JLabel("Тут многа текста");
-        infoPanel.add(label);
+        JPanel textPanel = new JPanel();
+        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+        for (JLabel l:getInfo()) {
+            textPanel.add(l);
+        }
+
+        infoPanel.add(textPanel);
         add(infoPanel);
 
         JPanel grid = new JPanel(new GridLayout(1, 2, 5, 0) );
@@ -50,14 +57,14 @@ public class PopUpFrame extends JFrame {
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setVisible(true);
     }
-    public PopUpFrame(Container panel, Error error, GCashBox parent) {
+    public PopUpFrame(Frame frame, Error error, GCashBox parent) {
         super("Ошибка");
         this.parent = parent;
-        JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(panel);
-        int width = parentFrame.getWidth()/2;
-        int height = parentFrame.getHeight()/3;
-        int x = parentFrame.getX() + parentFrame.getWidth()/4;
-        int y = parentFrame.getY() + parentFrame.getHeight()/4;
+
+        int width = frame.getWidth()/2;
+        int height = frame.getHeight()/3;
+        int x = frame.getX() + frame.getWidth()/4;
+        int y = frame.getY() + frame.getHeight()/4;
 
         setBounds(x,y, width, height);
         ImageIcon icon = new ImageIcon("src/main/resources/images/icon.png");
@@ -152,5 +159,25 @@ public class PopUpFrame extends JFrame {
     public void refresh(){
         getContentPane().validate();
         getContentPane().repaint();
+    }
+    private List<JLabel> getInfo(){
+        List<JLabel> labelList = new ArrayList<>();
+        JLabel label = new JLabel("Производитель: АТОЛ");
+        JLabel label2 = new JLabel("Автоотрезчик: Есть");
+        JLabel label3 = new JLabel("Модель: АТОЛ Sigma 8");
+        JLabel label4 = new JLabel("Страна производства: Россия");
+        JLabel label5 = new JLabel("Встроенный аккумулятор: Есть");
+        JLabel label6 = new JLabel("Диагональ дисплея: 8");
+        JLabel label7 = new JLabel("Процессор: MediaTek MTK6580");
+        JLabel label8 = new JLabel("Операционная система: Android 7.1");
+        labelList.add(label);
+        labelList.add(label2);
+        labelList.add(label3);
+        labelList.add(label4);
+        labelList.add(label5);
+        labelList.add(label6);
+        labelList.add(label7);
+        labelList.add(label8);
+        return labelList;
     }
 }
